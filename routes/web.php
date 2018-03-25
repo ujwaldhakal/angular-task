@@ -11,5 +11,5 @@
 |
 */
 
-Route::get('email/send','FormController@index');
 Route::get('/','HomeController@index');
+Route::post('email/send','FormController@index');
