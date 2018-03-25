@@ -13,7 +13,8 @@ abstract class AbstractEmail
     protected $mailStatus;
     protected $mailerServices = ['mailgun'];
     protected $apiResponse;
-    protected $counter = 0;
+    protected $swappedDrivers= false;
+    protected $fillable;
 
     public function __construct()
     {
@@ -22,11 +23,16 @@ abstract class AbstractEmail
 
     public function send()
     {
-        $this->process();
-        if (!$this->isMailSendSuccessfully()) {
-            $this->emailUsingAvailableServices();
-        }
-        $this->apiResponse = ['status' => 'success', 'message' => 'mail has been sent successfully'];
+       try {
+           $this->process();
+           if (!$this->isMailSendSuccessfully()) {
+               $this->emailUsingAvailableServices();
+           }
+           $this->apiResponse = ['status' => 'success', 'message' => 'mail has been sent successfully'];
+       }
+       catch (\Exception $exception) {
+           $this->apiResponse = ['status' => 'error', 'message' => 'There has been something wrong with our server will get back to you soon.'];
+       }
         return response($this->apiResponse);
     }
 
@@ -39,10 +45,15 @@ abstract class AbstractEmail
         });
     }
 
+    public function hasDriversBeenSwapped()
+    {
+        return $this->swappedDrivers;
+    }
+
     public function emailUsingAvailableServices()
     {
-
         foreach ($this->mailerServices as $service) {
+            $this->swappedDrivers = true;
             $mailerService = Factory::create($service);
             $mailerService->changeDriver();
             $this->process();
@@ -55,9 +66,9 @@ abstract class AbstractEmail
     protected function isMailSendSuccessfully()
     {
         $mailStatus = false;
-        if (!Mail::failures()) {
-            $mailStatus = true;
-        }
+//        if (!Mail::failures()) {
+//            $mailStatus = true;
+//        }
         return $mailStatus;
     }
 
@@ -69,6 +80,16 @@ abstract class AbstractEmail
     public function getSender()
     {
         return $this->params->get('email');
+    }
+
+    public function getName()
+    {
+        return $this->params->get('name');
+    }
+
+    public function getMessage()
+    {
+        return $this->params->get('message');
     }
 
     public function getSubject()
