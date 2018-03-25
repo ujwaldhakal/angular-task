@@ -66,9 +66,9 @@ abstract class AbstractEmail
     protected function isMailSendSuccessfully()
     {
         $mailStatus = false;
-//        if (!Mail::failures()) {
-//            $mailStatus = true;
-//        }
+        if (!Mail::failures()) {
+            $mailStatus = true;
+        }
         return $mailStatus;
     }
 
