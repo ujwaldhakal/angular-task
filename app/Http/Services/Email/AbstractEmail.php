@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Services\Email;
 
-use Illuminate\Support\Facades\Log;
+use App\Http\Services\Email\EmailServiceProvider\Factory;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\ParameterBag;
 
@@ -11,7 +11,9 @@ abstract class AbstractEmail
     protected $params;
     protected $request;
     protected $mailStatus;
-    protected $mailerServices = ['mailgun','mailtrap'];
+    protected $mailerServices = ['mailgun'];
+    protected $apiResponse;
+    protected $counter = 0;
 
     public function __construct()
     {
@@ -20,11 +22,12 @@ abstract class AbstractEmail
 
     public function send()
     {
-       //        while(!$this->isMailSendSuccessfully()) {
-           Log::info('testing mail',['testint times']);
-            $this->process();
-//            sleep(5);
-//        }
+        $this->process();
+        if (!$this->isMailSendSuccessfully()) {
+            $this->emailUsingAvailableServices();
+        }
+        $this->apiResponse = ['status' => 'success', 'message' => 'mail has been sent successfully'];
+        return response($this->apiResponse);
     }
 
     public function process()
@@ -34,6 +37,19 @@ abstract class AbstractEmail
             $message->from($this->getSender());
             $message->to($this->getReceiver());
         });
+    }
+
+    public function emailUsingAvailableServices()
+    {
+
+        foreach ($this->mailerServices as $service) {
+            $mailerService = Factory::create($service);
+            $mailerService->changeDriver();
+            $this->process();
+            if ($this->isMailSendSuccessfully()) {
+                return;
+            }
+        }
     }
 
     protected function isMailSendSuccessfully()

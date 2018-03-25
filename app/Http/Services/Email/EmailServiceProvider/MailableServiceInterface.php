@@ -1,5 +1,5 @@
 <?php
-namespace Services\Email\EmailServiceProvider;
+namespace App\Http\Services\Email\EmailServiceProvider;
 
 interface  MailableServiceInterface
 {
